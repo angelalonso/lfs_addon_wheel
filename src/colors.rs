@@ -209,3 +209,62 @@ pub fn print_values(u1: i32, _max: i32) -> std::io::Result<()> {
     stdout.execute(cursor::MoveUp(2))?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_color_from_hex() {
+        let hex_color = "#FF0000";
+        let color = Color::from_hex(hex_color);
+        assert_eq!(color.r, 255);
+        assert_eq!(color.g, 0);
+        assert_eq!(color.b, 0);
+        assert_eq!(color.a, 255);
+
+        let hex_color = "#00FF00";
+        let color = Color::from_hex(hex_color);
+        assert_eq!(color.r, 0);
+        assert_eq!(color.g, 255);
+        assert_eq!(color.b, 0);
+        assert_eq!(color.a, 255);
+
+        let hex_color = "#0000FF";
+        let color = Color::from_hex(hex_color);
+        assert_eq!(color.r, 0);
+        assert_eq!(color.g, 0);
+        assert_eq!(color.b, 255);
+        assert_eq!(color.a, 255);
+    }
+
+    #[test]
+    fn test_color_to_hex() {
+        let color = Color {
+            r: 255,
+            g: 0,
+            b: 0,
+            a: 255,
+        };
+        let hex_color = color.to_hex();
+        assert_eq!(hex_color, "#FF0000");
+
+        let color = Color {
+            r: 0,
+            g: 255,
+            b: 0,
+            a: 255,
+        };
+        let hex_color = color.to_hex();
+        assert_eq!(hex_color, "#00FF00");
+
+        let color = Color {
+            r: 0,
+            g: 0,
+            b: 255,
+            a: 255,
+        };
+        let hex_color = color.to_hex();
+        assert_eq!(hex_color, "#0000FF");
+    }
+}

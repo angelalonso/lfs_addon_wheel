@@ -1,5 +1,6 @@
 use lfs_addon_wheel::aux::formatter;
-use lfs_addon_wheel::outgauge::get_data;
+use lfs_addon_wheel::outgauge::get_og_data;
+use lfs_addon_wheel::outsim::get_os_data;
 use load_dotenv::load_dotenv;
 use std::io;
 use std::thread;
@@ -9,6 +10,7 @@ use std::time::Duration;
 // TODO: ask ChatGPT to write tests
 // TODO: check it runs as root, check android IDE Serial monitor is on
 
+#[allow(dead_code)]
 fn run() -> std::io::Result<()> {
     load_dotenv!();
     let og_addr = env!("OUTGAUGE_UDP_ADDR");
@@ -22,7 +24,7 @@ fn run() -> std::io::Result<()> {
         let handle = thread::spawn(move || {
             // Getting data from Live For Speed
             //TODO:  why clippy complains?
-            (_rpm, _maxrpm) = get_data(og_addr).unwrap_or((0.0, 0));
+            (_rpm, _maxrpm) = get_og_data(og_addr).unwrap_or((0.0, 0));
             //println!("DEBUG: got {} and {} from LFS", rpm, maxrpm);
 
             // Sending/receiving data from Arduino
@@ -59,7 +61,17 @@ fn run() -> std::io::Result<()> {
 
 #[allow(dead_code)]
 fn run_outsim() -> std::io::Result<()> {
-    Ok(())
+    load_dotenv!();
+    let os_addr = env!("OUTSIM_UDP_ADDR");
+    loop {
+        let handle = thread::spawn(move || {
+            // Getting data from Live For Speed
+            //TODO:  why clippy complains?
+            get_os_data(os_addr).unwrap();
+            //            println!("DEBUG: got {} from LFS", maxrpm);
+        });
+        handle.join().unwrap();
+    }
 }
 
 fn main() -> std::io::Result<()> {
@@ -75,11 +87,56 @@ fn main() -> std::io::Result<()> {
     //let _ = stdout().flush();
     //stdin().read_line(&mut s).expect("Please press ENTER");
     println!("Waiting for LFS to start...");
-    //match run_outsim() {
-    match run() {
+    match run_outsim() {
+        //match run() {
         Ok(_) => println!("All Good"),
         Err(e) => println!("ERROR: {:?}", e),
     };
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_read_config() {
+        let config = read_config("config.toml");
+        assert_eq!(config.is_ok(), true);
+    }
+
+    #[test]
+    fn test_setup_lfs_connection() {
+        let config = Config::default();
+        let lfs_conn = setup_lfs_connection(&config);
+        assert_eq!(lfs_conn.is_ok(), true);
+    }
+
+    #[test]
+    fn test_setup_outgauge_socket() {
+        let config = Config::default();
+        let outgauge_socket = setup_outgauge_socket(&config);
+        assert_eq!(outgauge_socket.is_ok(), true);
+    }
+
+    #[test]
+    fn test_setup_outsim_socket() {
+        let config = Config::default();
+        let outsim_socket = setup_outsim_socket(&config);
+        assert_eq!(outsim_socket.is_ok(), true);
+    }
+
+    #[test]
+    fn test_run() {
+        let config = Config::default();
+        let lfs_conn = setup_lfs_connection(&config).unwrap();
+        let outgauge_socket = setup_outgauge_socket(&config).unwrap();
+        let outsim_socket = setup_outsim_socket(&config).unwrap();
+
+        let result = run(&config, &lfs_conn, &outgauge_socket, &outsim_socket);
+
+        // Verify that the function returns Ok(())
+        assert_eq!(result.is_ok(), true);
+    }
 }

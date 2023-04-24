@@ -2,7 +2,7 @@ use crate::aux::mytrim;
 use std::collections::HashMap;
 use std::net::UdpSocket;
 
-pub fn get_data(outgauge_addr: &str) -> std::io::Result<(f32, i32)> {
+pub fn get_og_data(outgauge_addr: &str) -> std::io::Result<(f32, i32)> {
     let mut car_maxrpm = HashMap::new();
     car_maxrpm.insert(String::from("BF1"), 19912); // 3452
     car_maxrpm.insert(String::from("FO8"), 9476); // 1852
@@ -83,3 +83,38 @@ pub fn get_data(outgauge_addr: &str) -> std::io::Result<(f32, i32)> {
 //let _clutch = outgauge_pack[16];
 //let _display1 = outgauge_pack[17];
 //let _display2 = outgauge_pack[18];
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_packet() {
+        let packet = [
+            1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+        ];
+        let parsed_packet = parse_packet(&packet);
+        assert_eq!(parsed_packet.speed, 0);
+        assert_eq!(parsed_packet.rpm, 0);
+        assert_eq!(parsed_packet.gear, 0);
+        assert_eq!(parsed_packet.engine_temp, 0);
+        assert_eq!(parsed_packet.oil_temp, 0);
+        assert_eq!(parsed_packet.fuel, 0.0);
+        assert_eq!(parsed_packet.flags, 0);
+    }
+
+    #[test]
+    fn test_process_packet() {
+        let mut game_state = GameState::new();
+        let packet = [
+            1u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8, 0u8,
+        ];
+        process_packet(&mut game_state, &packet);
+        assert_eq!(game_state.speed, 0);
+        assert_eq!(game_state.rpm, 0);
+        assert_eq!(game_state.gear, 0);
+        assert_eq!(game_state.engine_temp, 0);
+        assert_eq!(game_state.oil_temp, 0);
+        assert_eq!(game_state.fuel, 0.0);
+        assert_eq!(game_state.flags, 0);
+    }
+}

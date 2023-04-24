@@ -105,3 +105,38 @@ fn test_colors() -> std::io::Result<()> {
     }
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_lfs_to_wheel() {
+        let lfs_value = 32767;
+        let wheel_value = lfs_to_wheel(lfs_value);
+        assert_eq!(wheel_value, 1.0);
+
+        let lfs_value = 16383;
+        let wheel_value = lfs_to_wheel(lfs_value);
+        assert_eq!(wheel_value, 0.5);
+
+        let lfs_value = 0;
+        let wheel_value = lfs_to_wheel(lfs_value);
+        assert_eq!(wheel_value, -1.0);
+    }
+
+    #[test]
+    fn test_wheel_to_lfs() {
+        let wheel_value = 1.0;
+        let lfs_value = wheel_to_lfs(wheel_value);
+        assert_eq!(lfs_value, 32767);
+
+        let wheel_value = 0.5;
+        let lfs_value = wheel_to_lfs(wheel_value);
+        assert_eq!(lfs_value, 16383);
+
+        let wheel_value = -1.0;
+        let lfs_value = wheel_to_lfs(wheel_value);
+        assert_eq!(lfs_value, 0);
+    }
+}
